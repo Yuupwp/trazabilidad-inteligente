@@ -1,0 +1,1 @@
+# Area|Spot|Asset|WO|Item|Supervisor|No_id|Turno|Copias|Serial|Consecutivo_Global|Consecutivo_Individual|Fecha|Liberado_por|Fecha_liberacion|Modelo_final

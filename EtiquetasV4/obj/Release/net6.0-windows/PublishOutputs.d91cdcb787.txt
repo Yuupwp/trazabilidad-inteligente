@@ -1,0 +1,11 @@
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\Etiquetas.exe
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\Etiquetas.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\Etiquetas.deps.json
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\Etiquetas.runtimeconfig.json
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\Etiquetas.pdb
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\System.Data.SqlClient.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\runtimes\win-arm64\native\sni.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\runtimes\win-x64\native\sni.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\runtimes\win-x86\native\sni.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\runtimes\unix\lib\netcoreapp2.1\System.Data.SqlClient.dll
+C:\Users\Jair.Lopez\Desktop\QualityPrint\EtiquetasV4\bin\Release\ActualizacionEtiquetas\runtimes\win\lib\netcoreapp2.1\System.Data.SqlClient.dll
