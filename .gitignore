@@ -1,0 +1,60 @@
+# ===== Visual Studio / .NET =====
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.cache
+*.pdb
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+packages/
+*.nupkg
+TestResults/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# ===== Datos generados por el sistema =====
+# Etiquetas impresas y registros locales
+output/
+etiquetas/
+*.pdf
+logs/
+*.log
+# Registros .txt de seriales (se sube solo uno de ejemplo)
+data/*.txt
+!data/ejemplo_registro.txt
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== Configuración con datos sensibles =====
+.env
+appsettings.Local.json
+config.local.*
+*.pfx
+*.snk
+
+# ===== Modelos y datasets pesados =====
+models/*.pt
+models/*.onnx
+dataset/
+
+# ===== Sistema operativo / editores =====
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
