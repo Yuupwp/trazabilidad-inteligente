@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <StartupObject>Sub Main</StartupObject>
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>WindowsForms</MyType>
@@ -21,7 +21,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Esquema compartido con el módulo Python; BaseSqlite lo lee como recurso "schema.sql" -->
+    <EmbeddedResource Include="..\db\schema.sql" LogicalName="schema.sql" Link="db\schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

@@ -27,6 +27,7 @@ Public Class Form1
     Dim etiquetaAnterior As Integer = 0
     Dim areaAnterior As String = ""
     Dim tempTextBox1 As String
+    Dim tempTextBox2 As String
     Dim tempTextBox4 As String
     Dim tempTextBox5 As String
     Dim tempTextBox7 As String
@@ -43,10 +44,8 @@ Public Class Form1
     Dim wo As String
     Dim item As String
     Dim secuencia As String
-    Dim fechaActual As DateTime = DateTime.Now
-    Dim anoActual As Integer = fechaActual.Year
     Dim letra As String = ""
-    Private ultimoBotonClicado As Windows.Forms.Button = Nothing
+    Private ultimoBotonClicado As System.Windows.Forms.Button = Nothing
 
     Public Sub New()
         InitializeComponent()
@@ -66,7 +65,7 @@ Public Class Form1
         ' Aplicar la región redondeada al formulario
         Me.Region = Region.FromHrgn(regionHandle)
     End Sub
-    Private Sub RedondearBoton(ByVal boton As Windows.Forms.Button, ByVal radio As Integer)
+    Private Sub RedondearBoton(ByVal boton As System.Windows.Forms.Button, ByVal radio As Integer)
         ' Crear una región redondeada con el radio especificado
         Dim regionHandle As IntPtr = CreateRoundRectRgn(0, 0, boton.Width, boton.Height, radio, radio)
 
@@ -189,7 +188,7 @@ Public Class Form1
         End If
 
         Try
-            etiquetaGeneral = BaseTxt.MaxConsecutivoGlobal()
+            etiquetaGeneral = BaseSqlite.MaxConsecutivoGlobal()
             TextBox14.Text = etiquetaGeneral.ToString("000000")
         Catch ex As Exception
             MessageBox.Show("Error al cargar los valores desde la base de datos: " & ex.Message)
@@ -249,6 +248,7 @@ Public Class Form1
 
             ' Utiliza los valores almacenados en las variables temporales para la impresión
             TextBox1.Text = tempTextBox1
+            TextBox2.Text = tempTextBox2
             TextBox4.Text = tempTextBox4
             TextBox5.Text = tempTextBox5
             TextBox7.Text = tempTextBox7
@@ -292,9 +292,10 @@ Public Class Form1
     Private mesAnterior As Integer = DateTime.Now.Month ' Variable para almacenar el mes anterior
 
     Private Sub PrintDocument1_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PrintDocument1.PrintPage
-        'Dim fechaActual As DateTime = DateTime.Now
-        'Dim anoActual As Integer = fechaActual.Year
-        Dim mesActual As Integer = Month(DateTime.Now)
+        ' Fecha tomada al momento de imprimir (no al abrir la app) para que serial y fecha no queden desfasados
+        Dim fechaActual As DateTime = DateTime.Now
+        Dim anoActual As Integer = fechaActual.Year
+        Dim mesActual As Integer = fechaActual.Month
         'Dim letra As String = ""
         Dim newFont As New Font(TextBox8.Font.FontFamily, 11) ' Cambia 12 al tamaño de fuente deseado
         'Dim NS As String = "R" & anoActual.ToString().Substring(2) & letra & "S" & etiquetaGeneral.ToString("000000")
@@ -306,7 +307,7 @@ Public Class Form1
         End If
 
         Try
-            etiquetaGeneral = BaseTxt.MaxConsecutivoGlobal()
+            etiquetaGeneral = BaseSqlite.MaxConsecutivoGlobal()
             TextBox14.Text = etiquetaGeneral.ToString("000000")
         Catch ex As Exception
             MessageBox.Show("Error al cargar los valores desde la base de datos: " & ex.Message)
@@ -374,8 +375,8 @@ Public Class Form1
             TextBox12.Text = etiquetaActual.ToString("000000")
             TextBox14.Text = etiquetaGeneral.ToString("000000")
 
-            e.Graphics.DrawString("*" & "R" & anoActual.ToString().Substring(2) & letra & "S" & etiquetaGeneral.ToString("000000") & "*", TextBox7.Font, Brushes.Black, 70, 66)
-            e.Graphics.DrawString("" & "R" & anoActual.ToString().Substring(2) & letra & "S" & etiquetaGeneral.ToString("000000") & "", newFont, Brushes.Black, 70, 90)
+            e.Graphics.DrawString("*" & NS & "*", TextBox7.Font, Brushes.Black, 70, 66)
+            e.Graphics.DrawString(NS, newFont, Brushes.Black, 70, 90)
             e.HasMorePages = i < PrintDocument1.PrinterSettings.Copies
             e.Graphics.DrawString("WO" & ": ", TextBox8.Font, Brushes.Black, 40, -4)
             e.Graphics.DrawString(TextBox1.Text & "-" & TextBox11.Text, TextBox8.Font, Brushes.Black, 75, -4)
@@ -394,7 +395,9 @@ Public Class Form1
         File.WriteAllText(rutaArchivoEtiquetaActual, etiquetaActual.ToString())
 
         Try
-            BaseTxt.Insertar(area, spot, systemName, TextBox1.Text, TextBox11.Text, TextBox4.Text, TextBox5.Text, ComboBox2.Text, TextBox10.Text, NS, etiquetaGeneral, etiquetaActual, fechaActual.ToString("dd/MM/yyyy"))
+            ' La revisión (Rv) solo se imprime en PIPING, así que solo ahí se guarda
+            Dim revision As String = If(contenido.ToUpper() = "PIPING", TextBox2.Text, "")
+            BaseSqlite.Insertar(area, spot, systemName, TextBox1.Text, TextBox11.Text, TextBox4.Text, TextBox5.Text, ComboBox2.Text, TextBox10.Text, NS, etiquetaGeneral, etiquetaActual, fechaActual, revision)
         Catch ex As Exception
             MessageBox.Show("Error al almacenar los datos en la base de datos: " & ex.Message)
         End Try
@@ -438,6 +441,7 @@ Public Class Form1
 
             ' Guarda los valores actuales en variables temporales
             tempTextBox1 = TextBox1.Text
+            tempTextBox2 = TextBox2.Text
             tempTextBox4 = TextBox4.Text
             tempTextBox5 = TextBox5.Text
             tempTextBox7 = TextBox7.Text
@@ -477,7 +481,7 @@ Public Class Form1
             Try
                 Dim woEncontrado As String = ""
                 Dim itemEncontrado As String = ""
-                If BaseTxt.BuscarPorSerial(serial, woEncontrado, itemEncontrado) Then
+                If BaseSqlite.BuscarPorSerial(serial, woEncontrado, itemEncontrado) Then
                     WorkOrder_SQL.Text = woEncontrado
                     Item_SQL.Text = itemEncontrado
                 Else
@@ -494,7 +498,7 @@ Public Class Form1
     Private Sub PrintDocument2_PrintPage(sender As Object, e As PrintPageEventArgs) Handles PrintDocument2.PrintPage
         Dim newFont As New Font(TextBox3.Font.FontFamily, 11)
         Dim textoModelo As String = "Modelo final: " & modeloFinal_SQL.Text.ToUpper()
-        Dim textSerial As String = Serial_SQL.Text.ToUpper()
+        Dim textSerial As String = Serial_SQL.Text.Trim().ToUpper()
         Dim fechaActual As DateTime = DateTime.Now
 
         ' Obtener los componentes de la fecha
@@ -515,13 +519,14 @@ Public Class Form1
         e.Graphics.DrawString(textoModelo, TextBox8.Font, Brushes.Black, 40, 41)
         e.Graphics.DrawString($"Fecha: {fechaImpresion}", TextBox8.Font, Brushes.Black, 40, 59)
         e.Graphics.DrawString("Turno: " & Turno.Text, TextBox8.Font, Brushes.Black, 240, 59)
-        e.Graphics.DrawString("*" & "R" & anoActual.ToString().Substring(2) & letra & "S" & etiquetaGeneral.ToString("000000") & "*", TextBox7.Font, Brushes.Black, 80, 101)
+        ' Código de barras del serial que se está liberando (antes usaba el último serial generado en esta estación)
+        e.Graphics.DrawString("*" & textSerial & "*", TextBox7.Font, Brushes.Black, 80, 101)
         e.Graphics.DrawString("Liberado por: " & Liberado.Text, TextBox8.Font, Brushes.Black, 40, 79)
         e.Graphics.DrawString("Serial: ", TextBox8.Font, Brushes.Black, 40, 101)
         e.Graphics.DrawString(textSerial, TextBox3.Font, Brushes.Black, 115, 125)
 
         Try
-            Dim filas As Integer = BaseTxt.Liberar(Serial_SQL.Text, Liberado.Text, fechaActual.ToString("dd/MM/yyyy"), modeloFinal_SQL.Text)
+            Dim filas As Integer = BaseSqlite.Liberar(Serial_SQL.Text, Liberado.Text, fechaActual, modeloFinal_SQL.Text)
             If filas > 0 Then
                 MessageBox.Show($"Se a liberado la etiqueta con el serial {Serial_SQL.Text}.", "Liberado con exito")
             Else

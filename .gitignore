@@ -58,3 +58,6 @@ desktop.ini
 .DS_Store
 .vscode/
 .idea/
+
+# Base SQLite compartida (incluye -wal/-shm) y capturas de la cámara
+datos/
