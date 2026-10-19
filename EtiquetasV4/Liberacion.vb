@@ -13,7 +13,7 @@ Public Class Liberacion
     Private Shared Function CreateRoundRectRgn(ByVal nLeftRect As Integer, ByVal nTopRect As Integer, ByVal nRightRect As Integer, ByVal nBottomRect As Integer, ByVal nWidthEllipse As Integer, ByVal nHeightEllipse As Integer) As IntPtr
     End Function
 
-    Private Sub RedondearBoton(ByVal boton As Windows.Forms.Button, ByVal radio As Integer)
+    Private Sub RedondearBoton(ByVal boton As System.Windows.Forms.Button, ByVal radio As Integer)
         ' Crear una región redondeada con el radio especificado
         Dim regionHandle As IntPtr = CreateRoundRectRgn(0, 0, boton.Width, boton.Height, radio, radio)
 

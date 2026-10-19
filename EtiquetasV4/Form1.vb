@@ -45,7 +45,7 @@ Public Class Form1
     Dim item As String
     Dim secuencia As String
     Dim letra As String = ""
-    Private ultimoBotonClicado As Windows.Forms.Button = Nothing
+    Private ultimoBotonClicado As System.Windows.Forms.Button = Nothing
 
     Public Sub New()
         InitializeComponent()
@@ -65,7 +65,7 @@ Public Class Form1
         ' Aplicar la región redondeada al formulario
         Me.Region = Region.FromHrgn(regionHandle)
     End Sub
-    Private Sub RedondearBoton(ByVal boton As Windows.Forms.Button, ByVal radio As Integer)
+    Private Sub RedondearBoton(ByVal boton As System.Windows.Forms.Button, ByVal radio As Integer)
         ' Crear una región redondeada con el radio especificado
         Dim regionHandle As IntPtr = CreateRoundRectRgn(0, 0, boton.Width, boton.Height, radio, radio)
 
