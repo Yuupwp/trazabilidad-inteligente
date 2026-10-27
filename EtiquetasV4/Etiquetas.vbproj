@@ -74,4 +74,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="OCR\**\*.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
