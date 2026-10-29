@@ -8,16 +8,33 @@ Imports System.Text
 ' espera su resultado y lo regresa a la app.
 Public Module VerificadorOCR
 
+    ' Decisión del motor de inferencia. Coincide con el código de salida de verificar_etiqueta.py.
+    Public Enum DecisionOCR
+        Liberar = 0
+        Rechazar = 1
+        ErrorOCR = 2          ' no se pudo ejecutar, no hubo captura o falló el script
+        RevisionManual = 3
+    End Enum
+
     Public Class ResultadoOCR
-        Public Property Aprobada As Boolean
+        Public Property Decision As DecisionOCR
         Public Property Detalle As String
     End Class
+
+    Private Function DecisionDesdeCodigo(codigo As Integer) As DecisionOCR
+        Select Case codigo
+            Case 0 : Return DecisionOCR.Liberar
+            Case 1 : Return DecisionOCR.Rechazar
+            Case 3 : Return DecisionOCR.RevisionManual
+            Case Else : Return DecisionOCR.ErrorOCR
+        End Select
+    End Function
 
     Public Function Verificar(usarCamara As Boolean, Optional rutaImagen As String = "") As ResultadoOCR
         Dim script As String = Path.Combine(AppContext.BaseDirectory, "OCR", "verificar_etiqueta.py")
 
         If Not File.Exists(script) Then
-            Return New ResultadoOCR With {.Aprobada = False, .Detalle = "No se encontró el script: " & script}
+            Return New ResultadoOCR With {.Decision = DecisionOCR.ErrorOCR, .Detalle = "No se encontró el script: " & script}
         End If
 
         Dim fuente As String = If(usarCamara, "--camara", """" & rutaImagen & """")
@@ -44,14 +61,14 @@ Public Module VerificadorOCR
                 End If
                 If detalle = "" Then detalle = "El módulo de OCR no devolvió resultado." & vbCrLf & errores.Trim()
 
-                ' Código de salida: 0 = LIBERAR, 1 = RECHAZAR, 2 = error
-                Return New ResultadoOCR With {.Aprobada = (p.ExitCode = 0), .Detalle = detalle}
+                ' Código de salida: 0 = LIBERAR, 1 = RECHAZAR, 2 = error, 3 = REVISION_MANUAL
+                Return New ResultadoOCR With {.Decision = DecisionDesdeCodigo(p.ExitCode), .Detalle = detalle}
             End Using
         Catch ex As Win32Exception
-            Return New ResultadoOCR With {.Aprobada = False,
+            Return New ResultadoOCR With {.Decision = DecisionOCR.ErrorOCR,
                 .Detalle = "No se encontró Python. Instálalo y agrégalo al PATH, y ejecuta: pip install opencv-python pyzbar pytesseract"}
         Catch ex As Exception
-            Return New ResultadoOCR With {.Aprobada = False, .Detalle = "Error al ejecutar el módulo de OCR: " & ex.Message}
+            Return New ResultadoOCR With {.Decision = DecisionOCR.ErrorOCR, .Detalle = "Error al ejecutar el módulo de OCR: " & ex.Message}
         End Try
     End Function
 

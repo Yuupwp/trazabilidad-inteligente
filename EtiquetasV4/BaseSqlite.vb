@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Reflection
+Imports System.Security.Cryptography
 Imports Microsoft.Data.Sqlite
 
 ' Acceso a la base SQLite compartida con el módulo Python (reemplaza a BaseTxt / SQL Server).
@@ -116,33 +117,123 @@ Public Module BaseSqlite
         End Using
     End Sub
 
-    Public Function BuscarPorSerial(serial As String, ByRef wo As String, ByRef item As String) As Boolean
+    ' Busca una etiqueta por serial. estado: IMPRESA, LIBERADA o RECHAZADA.
+    Public Function BuscarPorSerial(serial As String, ByRef wo As String, ByRef item As String, ByRef estado As String) As Boolean
         Using conexion As SqliteConnection = Abrir()
             Using cmd As SqliteCommand = conexion.CreateCommand()
-                cmd.CommandText = "SELECT wo, item FROM etiquetas WHERE serial = @serial"
+                cmd.CommandText = "SELECT wo, item, estado FROM etiquetas WHERE serial = @serial"
                 cmd.Parameters.AddWithValue("@serial", serial.Trim())
                 Using lector As SqliteDataReader = cmd.ExecuteReader()
                     If Not lector.Read() Then Return False
                     wo = lector.GetString(0)
                     item = lector.GetString(1)
+                    estado = lector.GetString(2)
                     Return True
                 End Using
             End Using
         End Using
     End Function
 
-    ' Regresa cuántos registros se actualizaron (0 si el serial no existe).
-    Public Function Liberar(serial As String, liberadoPor As String, fechaLiberacion As DateTime, modeloFinal As String) As Integer
+    ' Resultado de liberar o rechazar una etiqueta.
+    Public Enum ResultadoCierre
+        Hecho
+        NoExiste
+        YaCerrada      ' ya estaba LIBERADA o RECHAZADA; el estado actual se regresa en estadoActual
+    End Enum
+
+    ' Solo se libera una etiqueta que sigue en IMPRESA (no se puede liberar dos veces ni liberar una rechazada).
+    Public Function Liberar(serial As String, liberadoPor As String, fechaLiberacion As DateTime, modeloFinal As String,
+                            ByRef estadoActual As String) As ResultadoCierre
+        Return Cerrar(serial, "LIBERADA", liberadoPor, fechaLiberacion, modeloFinal, estadoActual)
+    End Function
+
+    ' Marca como RECHAZADA una etiqueta que sigue en IMPRESA.
+    Public Function Rechazar(serial As String, rechazadoPor As String, fecha As DateTime, ByRef estadoActual As String) As ResultadoCierre
+        Return Cerrar(serial, "RECHAZADA", rechazadoPor, fecha, Nothing, estadoActual)
+    End Function
+
+    ' liberado_por y fecha_liberacion guardan quién y cuándo cerró la etiqueta, tanto al liberar como al rechazar.
+    ' La condición estado = 'IMPRESA' va en el mismo UPDATE para que dos estaciones no cierren la misma etiqueta.
+    Private Function Cerrar(serial As String, nuevoEstado As String, usuario As String, fecha As DateTime,
+                            modeloFinal As String, ByRef estadoActual As String) As ResultadoCierre
         Using conexion As SqliteConnection = Abrir()
             Using cmd As SqliteCommand = conexion.CreateCommand()
                 cmd.CommandText =
-                    "UPDATE etiquetas SET estado = 'LIBERADA', liberado_por = @liberadoPor, " &
-                    "fecha_liberacion = @fecha, modelo_final = @modelo WHERE serial = @serial"
-                cmd.Parameters.AddWithValue("@liberadoPor", Valor(liberadoPor))
-                cmd.Parameters.AddWithValue("@fecha", fechaLiberacion.ToString(FormatoFecha))
+                    "UPDATE etiquetas SET estado = @estado, liberado_por = @usuario, " &
+                    "fecha_liberacion = @fecha, modelo_final = @modelo " &
+                    "WHERE serial = @serial AND estado = 'IMPRESA'"
+                cmd.Parameters.AddWithValue("@estado", nuevoEstado)
+                cmd.Parameters.AddWithValue("@usuario", Valor(usuario))
+                cmd.Parameters.AddWithValue("@fecha", fecha.ToString(FormatoFecha))
                 cmd.Parameters.AddWithValue("@modelo", Valor(modeloFinal))
                 cmd.Parameters.AddWithValue("@serial", serial.Trim())
-                Return cmd.ExecuteNonQuery()
+                If cmd.ExecuteNonQuery() > 0 Then
+                    estadoActual = nuevoEstado
+                    Return ResultadoCierre.Hecho
+                End If
+            End Using
+
+            Using cmd As SqliteCommand = conexion.CreateCommand()
+                cmd.CommandText = "SELECT estado FROM etiquetas WHERE serial = @serial"
+                cmd.Parameters.AddWithValue("@serial", serial.Trim())
+                Dim estado As Object = cmd.ExecuteScalar()
+                If estado Is Nothing OrElse estado Is DBNull.Value Then Return ResultadoCierre.NoExiste
+                estadoActual = CStr(estado)
+                Return ResultadoCierre.YaCerrada
+            End Using
+        End Using
+    End Function
+
+    ' ------------------------------------------------------------ usuarios de QA
+    ' Contraseñas con PBKDF2-HMAC-SHA256, 100 000 iteraciones, sal aleatoria de 16 bytes y hash de 32 bytes,
+    ' ambos guardados en Base64. En Python: hashlib.pbkdf2_hmac("sha256", pwd.encode("utf-8"), sal, 100000, 32).
+    ' Si se cambian estos parámetros, las contraseñas guardadas dejan de validar.
+    Private Const Iteraciones As Integer = 100000
+    Private Const BytesSal As Integer = 16
+    Private Const BytesHash As Integer = 32
+
+    Private Function CalcularHash(contraseña As String, sal As Byte()) As Byte()
+        Return Rfc2898DeriveBytes.Pbkdf2(contraseña, sal, Iteraciones, HashAlgorithmName.SHA256, BytesHash)
+    End Function
+
+    Public Function HayUsuarios() As Boolean
+        Using conexion As SqliteConnection = Abrir()
+            Using cmd As SqliteCommand = conexion.CreateCommand()
+                cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM usuarios)"
+                Return Convert.ToInt32(cmd.ExecuteScalar()) = 1
+            End Using
+        End Using
+    End Function
+
+    ' Regresa False si el usuario ya existe.
+    Public Function CrearUsuario(usuario As String, contraseña As String, Optional rol As String = "QA") As Boolean
+        Dim sal As Byte() = RandomNumberGenerator.GetBytes(BytesSal)
+        Using conexion As SqliteConnection = Abrir()
+            Using cmd As SqliteCommand = conexion.CreateCommand()
+                cmd.CommandText =
+                    "INSERT INTO usuarios (usuario, password_hash, salt, rol, creado) " &
+                    "VALUES (@usuario, @hash, @sal, @rol, @creado) ON CONFLICT (usuario) DO NOTHING"
+                cmd.Parameters.AddWithValue("@usuario", usuario.Trim())
+                cmd.Parameters.AddWithValue("@hash", Convert.ToBase64String(CalcularHash(contraseña, sal)))
+                cmd.Parameters.AddWithValue("@sal", Convert.ToBase64String(sal))
+                cmd.Parameters.AddWithValue("@rol", rol)
+                cmd.Parameters.AddWithValue("@creado", DateTime.Now.ToString(FormatoFecha))
+                Return cmd.ExecuteNonQuery() > 0
+            End Using
+        End Using
+    End Function
+
+    Public Function ValidarUsuario(usuario As String, contraseña As String) As Boolean
+        Using conexion As SqliteConnection = Abrir()
+            Using cmd As SqliteCommand = conexion.CreateCommand()
+                cmd.CommandText = "SELECT password_hash, salt FROM usuarios WHERE usuario = @usuario"
+                cmd.Parameters.AddWithValue("@usuario", If(usuario, "").Trim())
+                Using lector As SqliteDataReader = cmd.ExecuteReader()
+                    If Not lector.Read() Then Return False
+                    Dim guardado As Byte() = Convert.FromBase64String(lector.GetString(0))
+                    Dim sal As Byte() = Convert.FromBase64String(lector.GetString(1))
+                    Return CryptographicOperations.FixedTimeEquals(CalcularHash(If(contraseña, ""), sal), guardado)
+                End Using
             End Using
         End Using
     End Function

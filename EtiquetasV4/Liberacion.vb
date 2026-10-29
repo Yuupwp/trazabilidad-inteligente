@@ -26,47 +26,22 @@ Public Class Liberacion
         panel2.Location = tempLocation
     End Sub
     Private Sub btnIngresar_Click(sender As Object, e As EventArgs) Handles Ingresar.Click
-        ' Obtener el usuario y la contraseña ingresados por el usuario
-        Dim usuarioIngresado As String = Usuario.Text
-        Dim contraseñaIngresada As String = Contraseña.Text
-
-        ' Leer el archivo de texto que contiene los usuarios y contraseñas
-        Dim rutaArchivo As String = System.IO.Path.Combine(AppContext.BaseDirectory, "Etiquetas", "PassQA.txt") ' Reemplaza con la ruta real del archivo
-
-        If File.Exists(rutaArchivo) Then
-            Using lector As New StreamReader(rutaArchivo)
-                Dim usuarioGuardado As String = String.Empty
-                Dim contraseñaGuardada As String = String.Empty
-                Dim encontróUsuario As Boolean = False
-
-                While Not lector.EndOfStream
-                    Dim linea As String = lector.ReadLine()
-
-                    If linea.StartsWith("Usuario:") Then
-                        ' Extraer el usuario de la línea
-                        usuarioGuardado = linea.Replace("Usuario:", "").Trim()
-                        encontróUsuario = True
-                    ElseIf linea.StartsWith("Contraseña:") AndAlso encontróUsuario Then
-                        ' Extraer la contraseña de la línea
-                        contraseñaGuardada = linea.Replace("Contraseña:", "").Trim()
-
-                        ' Verificar si el usuario y la contraseña ingresados coinciden con los guardados
-                        If usuarioIngresado = usuarioGuardado AndAlso contraseñaIngresada = contraseñaGuardada Then
-                            ' Si coinciden, cerrar el formulario con resultado OK
-                            DialogResult = DialogResult.OK
-                            Return
-                        End If
-
-                        ' Reiniciar para el siguiente usuario
-                        usuarioGuardado = String.Empty
-                        contraseñaGuardada = String.Empty
-                        encontróUsuario = False
-                    End If
-                End While
-            End Using
-        Else
-            MessageBox.Show("El archivo de contraseñas no se encuentra.", "Error de Archivo", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End If
+        ' Los usuarios viven en la tabla usuarios de la base SQLite, con la contraseña cifrada (PBKDF2).
+        Try
+            If Not BaseSqlite.HayUsuarios() Then
+                MessageBox.Show("No hay usuarios registrados. Crea el primero con el botón Register.",
+                                "Sin usuarios", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                DialogResult = DialogResult.Cancel
+                Return
+            End If
+            If BaseSqlite.ValidarUsuario(Usuario.Text, Contraseña.Text) Then
+                DialogResult = DialogResult.OK
+                Return
+            End If
+        Catch ex As Exception
+            MessageBox.Show("Error al validar el usuario: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return
+        End Try
 
         ' Si el usuario y/o la contraseña son incorrectos, mostrar un mensaje de error
         MessageBox.Show("Usuario y/o contraseña incorrectos. Intente de nuevo.", "Error de Autenticación", MessageBoxButtons.OK, MessageBoxIcon.Error)
