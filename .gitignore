@@ -16,6 +16,10 @@ packages/
 *.nupkg
 TestResults/
 
+# Paquetes de versiones publicadas (se distribuyen aparte, no en git)
+*.7z
+*.zip
+
 # ===== Python =====
 __pycache__/
 *.py[cod]
@@ -24,21 +28,23 @@ venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
+.pytest_cache/
 
 # ===== Datos generados por el sistema =====
-# Etiquetas impresas y registros locales
-output/
-etiquetas/
-*.pdf
-logs/
-*.log
-# Registros .txt de seriales (se sube solo uno de ejemplo)
-data/*.txt
-!data/ejemplo_registro.txt
-# Base de datos local
+# Base SQLite compartida (incluye -wal/-shm) y capturas de la cámara
+datos/
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
+logs/
+*.log
+# Salidas sueltas; los manuales exportados a PDF en docs/ sí se versionan
+*.pdf
+!docs/**/*.pdf
+# Ojo: anclado a la raíz. Sin "/" también ignoraría EtiquetasV4/Etiquetas/ (Windows no distingue mayúsculas).
+/output/
 
 # ===== Configuración con datos sensibles =====
 .env
@@ -46,6 +52,8 @@ appsettings.Local.json
 config.local.*
 *.pfx
 *.snk
+# Contraseñas en texto plano del sistema anterior; ahora los usuarios viven en la tabla usuarios
+PassQA.txt
 
 # ===== Modelos y datasets pesados =====
 models/*.pt
@@ -58,6 +66,3 @@ desktop.ini
 .DS_Store
 .vscode/
 .idea/
-
-# Base SQLite compartida (incluye -wal/-shm) y capturas de la cámara
-datos/

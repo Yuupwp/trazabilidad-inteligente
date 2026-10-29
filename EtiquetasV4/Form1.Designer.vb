@@ -69,6 +69,7 @@ Partial Class Form1
         Turno = New ComboBox()
         Item_SQL = New TextBox()
         ImprimirQA = New Button()
+        RechazarQA = New Button()
         Label5 = New Label()
         WorkOrder_SQL = New TextBox()
         Label13 = New Label()
@@ -565,6 +566,17 @@ Partial Class Form1
         ImprimirQA.Text = "Print"
         ImprimirQA.UseVisualStyleBackColor = True
         ' 
+        ' RechazarQA
+        ' 
+        RechazarQA.Font = New Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point)
+        RechazarQA.Location = New Point(306, 273)
+        RechazarQA.Margin = New Padding(3, 4, 3, 4)
+        RechazarQA.Name = "RechazarQA"
+        RechazarQA.Size = New Size(86, 31)
+        RechazarQA.TabIndex = 7
+        RechazarQA.Text = "Reject"
+        RechazarQA.UseVisualStyleBackColor = True
+        ' 
         ' Label5
         ' 
         Label5.AutoSize = True
@@ -757,6 +769,7 @@ Partial Class Form1
         panelLiberacion.Controls.Add(Cantidad)
         panelLiberacion.Controls.Add(Label5)
         panelLiberacion.Controls.Add(Label16)
+        panelLiberacion.Controls.Add(RechazarQA)
         panelLiberacion.Controls.Add(ImprimirQA)
         panelLiberacion.Controls.Add(Turno)
         panelLiberacion.Controls.Add(Item_SQL)
@@ -830,6 +843,7 @@ Partial Class Form1
     Friend WithEvents TextBox2 As TextBox
     Friend WithEvents Item_SQL As TextBox
     Friend WithEvents ImprimirQA As Button
+    Friend WithEvents RechazarQA As Button
     Friend WithEvents Label5 As Label
     Friend WithEvents WorkOrder_SQL As TextBox
     Friend WithEvents Label13 As Label

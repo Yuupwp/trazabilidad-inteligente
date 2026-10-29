@@ -38,6 +38,7 @@ Public Class Form1
     Dim tempSecuencia As String
     Dim tempCantidad As String
     Dim tempSerial As String
+    Dim tempTurno As String
     Dim drag As Boolean
     Dim mouseX As Integer
     Dim mouseY As Integer
@@ -244,10 +245,9 @@ Public Class Form1
         boton.Enabled = False
         Try
             Dim res As ResultadoOCR = Await System.Threading.Tasks.Task.Run(Function() VerificadorOCR.Verificar(usarCamara, rutaImagen))
-            MessageBox.Show(res.Detalle,
-                            If(res.Aprobada, "LIBERAR - etiqueta aprobada", "RECHAZAR - etiqueta no válida"),
-                            MessageBoxButtons.OK,
-                            If(res.Aprobada, MessageBoxIcon.Information, MessageBoxIcon.Warning))
+            Using ventana As New VentanaResultadoOCR(res)
+                ventana.ShowDialog(Me)
+            End Using
         Finally
             boton.Enabled = True
         End Try
@@ -530,9 +530,14 @@ Public Class Form1
             Try
                 Dim woEncontrado As String = ""
                 Dim itemEncontrado As String = ""
-                If BaseSqlite.BuscarPorSerial(serial, woEncontrado, itemEncontrado) Then
+                Dim estado As String = ""
+                If BaseSqlite.BuscarPorSerial(serial, woEncontrado, itemEncontrado, estado) Then
                     WorkOrder_SQL.Text = woEncontrado
                     Item_SQL.Text = itemEncontrado
+                    If estado <> "IMPRESA" Then
+                        MessageBox.Show($"La etiqueta {serial.ToUpper()} ya está {estado}. No se puede liberar ni rechazar de nuevo.",
+                                        "Etiqueta ya procesada", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    End If
                 Else
                     MessageBox.Show("No se encontraron resultados para el serial proporcionado.", "Error")
                 End If
@@ -573,34 +578,50 @@ Public Class Form1
         e.Graphics.DrawString("Liberado por: " & Liberado.Text, TextBox8.Font, Brushes.Black, 40, 79)
         e.Graphics.DrawString("Serial: ", TextBox8.Font, Brushes.Black, 40, 101)
         e.Graphics.DrawString(textSerial, TextBox3.Font, Brushes.Black, 115, 125)
+        ' Este handler solo dibuja: la liberación en la base se hace una vez en ImprimirQA_Click,
+        ' así la reimpresión no vuelve a tocar el registro.
+    End Sub
 
-        Try
-            Dim filas As Integer = BaseSqlite.Liberar(Serial_SQL.Text, Liberado.Text, fechaActual, modeloFinal_SQL.Text)
-            If filas > 0 Then
-                MessageBox.Show($"Se a liberado la etiqueta con el serial {Serial_SQL.Text}.", "Liberado con exito")
-            Else
-                MessageBox.Show($"No se encontró ninguna fila para el serial {Serial_SQL.Text} en la base de datos.", "Error")
-            End If
-        Catch ex As Exception
-            ' Manejo de errores
-        End Try
+    ' Mensaje para cuando la etiqueta no se pudo liberar o rechazar.
+    Private Sub AvisarCierreFallido(resultado As BaseSqlite.ResultadoCierre, serial As String, estadoActual As String)
+        If resultado = BaseSqlite.ResultadoCierre.NoExiste Then
+            MessageBox.Show($"El serial {serial} no existe en la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Else
+            MessageBox.Show($"La etiqueta {serial} ya está {estadoActual}. No se puede liberar ni rechazar de nuevo.",
+                            "Etiqueta ya procesada", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        End If
     End Sub
 
     Private Sub ImprimirQA_Click(sender As Object, e As EventArgs) Handles ImprimirQA.Click
-        If Liberado.Text <> "" AndAlso Serial_SQL.Text <> "" AndAlso WorkOrder_SQL.Text <> "" AndAlso Item_SQL.Text <> "" AndAlso modeloFinal_SQL.Text <> "" Then ' Verifica si ambos TextBox11 y TextBox10 no están vacíos
+        If Liberado.Text <> "" AndAlso Serial_SQL.Text <> "" AndAlso WorkOrder_SQL.Text <> "" AndAlso Item_SQL.Text <> "" AndAlso modeloFinal_SQL.Text <> "" Then
             Dim numberOfCopies As Integer
-            If Not Integer.TryParse(Cantidad.Text, numberOfCopies) Then
+            If Not Integer.TryParse(Cantidad.Text, numberOfCopies) OrElse numberOfCopies < 1 Then
                 MessageBox.Show("Ingrese un número válido.", "Error")
                 Return
             End If
 
-            ' Guarda los valores actuales en variables temporales
+            ' Primero se libera en la base; si la etiqueta ya estaba liberada o rechazada no se imprime nada.
+            Dim serial As String = Serial_SQL.Text.Trim().ToUpper()
+            Dim estadoActual As String = ""
+            Try
+                Dim resultado = BaseSqlite.Liberar(serial, Liberado.Text, DateTime.Now, modeloFinal_SQL.Text, estadoActual)
+                If resultado <> BaseSqlite.ResultadoCierre.Hecho Then
+                    AvisarCierreFallido(resultado, serial, estadoActual)
+                    Return
+                End If
+            Catch ex As Exception
+                MessageBox.Show("Error al liberar en la base de datos: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End Try
+
+            ' Guarda los valores actuales para Reprint
             tempWorkOrder = WorkOrder_SQL.Text
             tempItem = Item_SQL.Text
             tempSecuencia = modeloFinal_SQL.Text
             tempLiberado = Liberado.Text
             tempCantidad = Cantidad.Text
             tempSerial = Serial_SQL.Text
+            tempTurno = Turno.Text
 
             For k As Integer = 1 To numberOfCopies
                 PrintPreviewDialog1.Document = PrintDocument2
@@ -618,36 +639,40 @@ Public Class Form1
             TextBox7.Clear()
             Turno.SelectedIndex = -1
 
+            MessageBox.Show($"Se liberó la etiqueta con el serial {serial}.", "Liberado con éxito")
         Else
             MsgBox("Complete todos los campos")
         End If
     End Sub
 
+    ' Reimprime la última etiqueta de liberación impresa en esta sesión. No cambia la base de datos.
     Private Sub ReimpresionQA_Click(sender As Object, e As EventArgs) Handles ReimpresionQA.Click
-        ' Verifica que se haya ingresado un valor
-        If Not IsNumeric(Reimpirmir.Text) Then
+        If String.IsNullOrEmpty(tempSerial) Then
+            MessageBox.Show("Todavía no se ha impreso ninguna etiqueta de liberación en esta sesión.", "Error")
+            Return
+        End If
+
+        Dim numberOfCopies As Integer
+        If Not Integer.TryParse(Reimpirmir.Text, numberOfCopies) OrElse numberOfCopies < 1 Then
             MessageBox.Show("Ingresa un valor valido", "Error")
             Return
         End If
 
-        Dim numberOfCopies As Integer = CInt(Reimprimir.Text)
+        ' Se usan los valores de la última liberación
+        WorkOrder_SQL.Text = tempWorkOrder
+        Item_SQL.Text = tempItem
+        modeloFinal_SQL.Text = tempSecuencia
+        Liberado.Text = tempLiberado
+        Cantidad.Text = tempCantidad
+        Serial_SQL.Text = tempSerial
+        Turno.Text = tempTurno
 
-        ' Ahora puedes continuar con el bucle For
         For i As Integer = 1 To numberOfCopies
-            ' Se utilizan los valoires almacenados 
-            WorkOrder_SQL.Text = tempWorkOrder
-            Item_SQL.Text = tempItem =
-            modeloFinal_SQL.Text = tempSecuencia
-            Liberado.Text = tempLiberado
-            Cantidad.Text = tempCantidad
-            Serial_SQL.Text = tempSerial
-
-            ' Imprime la etiqueta utilizando los valores actualizados
             PrintPreviewDialog1.Document = PrintDocument2
             PrintDocument2.PrinterSettings = PrintDialog1.PrinterSettings
             PrintDocument2.Print()
-
         Next
+
         'Se limpian los campos
         WorkOrder_SQL.Clear()
         Item_SQL.Clear()
@@ -655,10 +680,44 @@ Public Class Form1
         Liberado.Clear()
         Cantidad.Clear()
         Serial_SQL.Clear()
+        Reimpirmir.Clear()
         TextBox7.Clear()
         Turno.SelectedIndex = -1
+    End Sub
 
+    ' Marca la etiqueta buscada como RECHAZADA. No imprime nada.
+    Private Sub RechazarQA_Click(sender As Object, e As EventArgs) Handles RechazarQA.Click
+        Dim serial As String = Serial_SQL.Text.Trim().ToUpper()
+        If serial = "" OrElse Liberado.Text.Trim() = "" Then
+            MessageBox.Show("Escribe el serial y quién rechaza (Released by).", "Error")
+            Return
+        End If
 
+        If MessageBox.Show($"¿Marcar la etiqueta {serial} como RECHAZADA?" & vbCrLf & "Después ya no se podrá liberar.",
+                           "Rechazar etiqueta", MessageBoxButtons.YesNo, MessageBoxIcon.Question) <> DialogResult.Yes Then
+            Return
+        End If
+
+        Dim estadoActual As String = ""
+        Try
+            Dim resultado = BaseSqlite.Rechazar(serial, Liberado.Text, DateTime.Now, estadoActual)
+            If resultado <> BaseSqlite.ResultadoCierre.Hecho Then
+                AvisarCierreFallido(resultado, serial, estadoActual)
+                Return
+            End If
+        Catch ex As Exception
+            MessageBox.Show("Error al rechazar en la base de datos: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return
+        End Try
+
+        WorkOrder_SQL.Clear()
+        Item_SQL.Clear()
+        modeloFinal_SQL.Clear()
+        Liberado.Clear()
+        Cantidad.Clear()
+        Serial_SQL.Clear()
+        Turno.SelectedIndex = -1
+        MessageBox.Show($"La etiqueta {serial} quedó marcada como RECHAZADA.", "Etiqueta rechazada")
     End Sub
 
     Private Sub Trazabilidad_Click(sender As Object, e As EventArgs) Handles Trazabilidad.Click
@@ -686,6 +745,22 @@ Public Class Form1
     End Sub
 
     Private Sub Registro_Click(sender As Object, e As EventArgs) Handles Registro.Click
+        ' Primera vez: si todavía no hay usuarios, se crea el primero sin pedir login.
+        Dim hayUsuarios As Boolean
+        Try
+            hayUsuarios = BaseSqlite.HayUsuarios()
+        Catch ex As Exception
+            MessageBox.Show("Error al leer los usuarios: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return
+        End Try
+        If Not hayUsuarios Then
+            MessageBox.Show("No hay usuarios registrados. Crea el primer usuario de QA.", "Primer usuario")
+            Using formularioRegistro As New Registro()
+                formularioRegistro.ShowDialog()
+            End Using
+            Return
+        End If
+
         ' Mostrar el formulario de ingreso de contraseña (Liberacion)
         Dim formIngresarContraseña As New Liberacion()
 
