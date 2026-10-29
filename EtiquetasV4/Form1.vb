@@ -201,7 +201,56 @@ Public Class Form1
             MessageBox.Show("Error al cargar el archivo: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
 
+        AgregarBotonVerificacion()
 
+    End Sub
+
+    ' ---- Modulo de Percepcion Visual y OCR ----
+    ' El boton se crea por codigo para no modificar el diseñador.
+    Private Sub AgregarBotonVerificacion()
+        Dim btnOcr As New System.Windows.Forms.Button()
+        btnOcr.Name = "btnVerificarOCR"
+        btnOcr.Text = "Verify label (OCR)"
+        btnOcr.Size = New Size(150, 28)
+        btnOcr.Location = New Point(Me.ClientSize.Width - btnOcr.Width - 12, Me.ClientSize.Height - btnOcr.Height - 8)
+        btnOcr.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+        AddHandler btnOcr.Click, AddressOf BtnVerificarOCR_Click
+        Me.Controls.Add(btnOcr)
+        btnOcr.BringToFront()
+    End Sub
+
+    Private Async Sub BtnVerificarOCR_Click(sender As Object, e As EventArgs)
+        Dim usarCamara As Boolean = False
+        Dim rutaImagen As String = ""
+
+        Dim resp As DialogResult = MessageBox.Show(
+            "¿Verificar la etiqueta con la cámara?" & vbCrLf & vbCrLf &
+            "Sí = cámara (ESPACIO para capturar, Q para salir)" & vbCrLf &
+            "No = elegir una imagen",
+            "Verificar etiqueta (OCR)", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question)
+        If resp = DialogResult.Cancel Then Return
+
+        If resp = DialogResult.Yes Then
+            usarCamara = True
+        Else
+            Using dlg As New OpenFileDialog()
+                dlg.Filter = "Imágenes|*.png;*.jpg;*.jpeg;*.bmp"
+                If dlg.ShowDialog() <> DialogResult.OK Then Return
+                rutaImagen = dlg.FileName
+            End Using
+        End If
+
+        Dim boton As System.Windows.Forms.Button = DirectCast(sender, System.Windows.Forms.Button)
+        boton.Enabled = False
+        Try
+            Dim res As ResultadoOCR = Await System.Threading.Tasks.Task.Run(Function() VerificadorOCR.Verificar(usarCamara, rutaImagen))
+            MessageBox.Show(res.Detalle,
+                            If(res.Aprobada, "LIBERAR - etiqueta aprobada", "RECHAZAR - etiqueta no válida"),
+                            MessageBoxButtons.OK,
+                            If(res.Aprobada, MessageBoxIcon.Information, MessageBoxIcon.Warning))
+        Finally
+            boton.Enabled = True
+        End Try
     End Sub
 
     Private Sub Ventana_MouseDown(sender As Object, e As MouseEventArgs) Handles Ventana.MouseDown
