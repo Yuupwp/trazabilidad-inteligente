@@ -24,7 +24,7 @@ Instalación y mantenimiento.
 
 1. Descripción general: app VB.NET (WinForms, .NET 8) y módulo Python de visión y reglas, que comparten una base SQLite; diagrama Mermaid.
 2. Estructura del repositorio (EtiquetasV4/, OCR/, db/, docs/, Img/).
-3. Requisitos: Windows, .NET 8 Desktop Runtime (SDK para desarrollo), fuente Libre Barcode 39, impresora, Python 3 con opencv-python, pyzbar y pytesseract, Tesseract OCR, VC++ Redistributable, webcam.
+3. Requisitos: Windows, .NET 8 Desktop Runtime (SDK para desarrollo), fuente Bar-Code 39 solo para Embarques (los códigos de trazabilidad y liberación se dibujan sin fuente), impresora, Python 3 con opencv-python, pyzbar y pytesseract, Tesseract OCR, VC++ Redistributable, webcam.
 4. Instalación: desarrollo (clonar, dotnet build, dotnet run), producción (publicación y qué copiar), Python y OCR con su verificación.
 5. Configuración de la estación: Area.txt, Spot.txt, No_borrar_ni_abrir.txt, variable TRAZA_DB y orden de búsqueda de la base, y cómo se crea el primer usuario de QA.
 6. Arquitectura de la app VB.NET: formularios y paneles; flujo de impresión, generación del serial y consecutivos; BaseSqlite; VerificadorOCR y sus códigos de salida 0 a 3; ventana de resultado.

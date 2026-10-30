@@ -437,7 +437,7 @@ Se reimprime la última etiqueta de embarque de **esta sesión**. Si todavía no
 - **Una etiqueta por pieza.** Usa *Number of copies* con el número exacto de etiquetas que necesitas: cada una lleva un serial distinto.
 - **Evita reimprimir en Traceability.** Cada *Reprint* crea un serial y un registro nuevos. Si una etiqueta salió mal, apártala y avisa a QA para que la rechace con **Reject**.
 - **Llena todos los campos**, aunque la app solo exija algunos.
-- Escribe la orden de trabajo y el item **en mayúsculas**, tal como vienen en la orden. El código de barras de la etiqueta (Code 39) solo codifica mayúsculas, números y algunos signos.
+- Escribe la orden de trabajo y el item **en mayúsculas**, tal como vienen en la orden, y sin signos raros. El código de barras de la etiqueta (Code 39) solo admite mayúsculas, números y algunos signos (`-` `.` `$` `/` `+` `%` y espacio): la app convierte a mayúsculas y omite lo demás, pero el registro guarda lo que escribiste, y la verificación puede marcar que el item no coincide.
 - **Revisa la impresora predeterminada** antes de imprimir: la app no pregunta a qué impresora mandar.
 - **Verifica antes de liberar:** imprime → verifica con *Verify label (OCR)* → si sale LIBERAR, libera en *Release*.
 - Si la verificación sale **REVISIÓN MANUAL**, revisa la etiqueta a simple vista antes de decidir. Si sale **RECHAZAR**, aparta la etiqueta.

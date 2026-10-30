@@ -65,6 +65,7 @@ trazabilidad-inteligente/
     Registro.vb                diálogo de alta de usuarios
     Embarques.vb               formulario de etiqueta de embarque (estación EMBARQUES)
     BaseSqlite.vb              acceso a la base: etiquetas, liberación/rechazo, usuarios
+    CodigoBarras39.vb          dibuja los códigos de barras Code 39 con rectángulos (sin fuente)
     VerificadorOCR.vb          ejecuta el script de Python y traduce su código de salida
     VentanaResultadoOCR.vb     ventana del resultado (creada por código, sin diseñador)
     ApplicationEvents.vb       plantilla de eventos de la aplicación (vacía)
@@ -90,8 +91,7 @@ trazabilidad-inteligente/
 |---|---|---|
 | **Windows** | App WinForms | La app usa `net8.0-windows` y llamadas a `Gdi32.dll` |
 | **.NET 8 Desktop Runtime** | Ejecutar la app publicada | Para desarrollo: **.NET 8 SDK** (`dotnet build`, `dotnet run`) |
-| **Fuente "Libre Barcode 39"** | Códigos de barras de las etiquetas de trazabilidad y de liberación | Debe estar instalada en Windows. Sin ella, los códigos de barras salen como texto normal |
-| **Fuente "Bar-Code 39"** | Códigos de barras de la etiqueta de embarque | Solo en estaciones EMBARQUES. Es una fuente distinta de la anterior |
+| **Fuente "Bar-Code 39"** | Códigos de barras de la etiqueta de embarque | Solo en estaciones EMBARQUES. Las etiquetas de trazabilidad y de liberación no necesitan ninguna fuente de código de barras (ver [6.7](#67-códigos-de-barras-codigobarras39)) |
 | **Impresora** | Imprimir | La app imprime siempre en la **impresora predeterminada de Windows**, sin diálogo |
 | **Python 3** en el `PATH` como `python` | Verificación OCR | `VerificadorOCR.vb` ejecuta literalmente `python`. Las pruebas se corrieron con Python 3.13 |
 | `opencv-python`, `pyzbar`, `pytesseract` | Visión, códigos de barras, OCR | `pip install opencv-python pyzbar pytesseract` |
@@ -133,7 +133,7 @@ También se puede abrir `EtiquetasV4.sln` en Visual Studio 2022.
    El resultado queda en `EtiquetasV4\bin\Release\ActualizacionEtiquetas\` (dependiente del runtime, no autocontenido).
 2. Copiar **toda** esa carpeta a la estación. Debe incluir `Etiquetas.exe`, sus DLL, la carpeta `Etiquetas\` y la carpeta `OCR\`.
 3. Editar `Etiquetas\Area.txt` y `Etiquetas\Spot.txt` para esa estación (ver [sección 5](#5-configuración-de-la-estación)).
-4. Instalar en la estación el .NET 8 Desktop Runtime, la fuente Libre Barcode 39 (y Bar-Code 39 si es EMBARQUES) y configurar la impresora de etiquetas como predeterminada.
+4. Instalar en la estación el .NET 8 Desktop Runtime (y la fuente Bar-Code 39 si es EMBARQUES) y configurar la impresora de etiquetas como predeterminada.
 5. Fuera del repositorio, la base se crea en `<carpeta del exe>\datos\trazabilidad.db`, salvo que se defina `TRAZA_DB`.
 
 > **Al actualizar una estación**, no sobrescribas `Etiquetas\` ni `datos\`. La publicación trae los `.txt` del repositorio, que reemplazarían el área, el spot y el contador individual de la estación, y `datos\` contiene la base.
@@ -227,6 +227,7 @@ Con al menos un usuario, *Register* pide iniciar sesión con un usuario existent
 | `Embarques` | Formulario incrustado | Etiqueta de embarque; solo en modo EMBARQUES; no usa la base |
 | `VentanaResultadoOCR` | Formulario creado por código | Resultado de la verificación con encabezado de color |
 | `BaseSqlite` | Módulo | Único acceso a SQLite desde VB |
+| `CodigoBarras39` | Módulo | Dibuja códigos Code 39 con rectángulos ([6.7](#67-códigos-de-barras-codigobarras39)) |
 | `VerificadorOCR` | Módulo | Ejecuta Python y traduce el código de salida |
 
 `Form1` no tiene borde (`FormBorderStyle.None`), redondea sus esquinas con `CreateRoundRectRgn` y se arrastra desde el panel `Ventana`.
@@ -249,7 +250,8 @@ Con al menos un usuario, *Register* pide iniciar sesión con un usuario existent
 | | `TextBox13` | No. of Reprints | reimpresiones |
 | | `TextBox12` / `TextBox14` | Individual / Global | contadores (solo lectura) |
 | | `Button3` / `Reimprimir` | Print / Reprint | |
-| | `TextBox7`, `TextBox8`, `TextBox3` | (ocultos) | Solo guardan fuentes: `TextBox7` = Libre Barcode 39 24 pt, `TextBox8` = Segoe UI 10 pt, `TextBox3` = Segoe UI 10.2 pt negrita |
+| | `TextBox8`, `TextBox3` | (ocultos) | Solo guardan fuentes de texto: `TextBox8` = Segoe UI 10 pt, `TextBox3` = Segoe UI 10.2 pt negrita |
+| | `TextBox7` | (oculto) | Resto de la versión con fuente: conserva Libre Barcode 39 24 pt y recibe `*item*`, pero ya no se usa para dibujar |
 | Release | `Serial_SQL` / `Buscar` | Serial / Search | |
 | | `WorkOrder_SQL`, `Item_SQL` | WorkOrder, Item | deshabilitados; los llena Search |
 | | `modeloFinal_SQL` | Model final | `modelo_final` |
@@ -273,7 +275,7 @@ Con al menos un usuario, *Register* pide iniciar sesión con un usuario existent
 3. Calcula la letra del mes (`A`–`H`, `J`–`M`).
 4. Incrementa el contador individual (`etiquetaActual`) y el global.
 5. Arma el serial: `"R" & yy & letra & "S" & etiquetaGeneral.ToString("000000")`.
-6. Dibuja la etiqueta con coordenadas fijas. Los códigos de barras son el texto `*VALOR*` con la fuente de `TextBox7`.
+6. Dibuja la etiqueta con coordenadas fijas. Los códigos de barras (SN en `(70, 66)` y M/I en `(75, 14)`, tomado de `TextBox11`) se dibujan con `CodigoBarras39.Dibujar` ([6.7](#67-códigos-de-barras-codigobarras39)).
 7. Escribe el contador individual en `No_borrar_ni_abrir.txt`.
 8. Inserta la fila con `BaseSqlite.Insertar` (estado `IMPRESA`).
 
@@ -293,7 +295,7 @@ Consecuencias:
 | Reprint | `ReimpresionQA_Click` | Reimprime con los `temp*` de la última liberación de la sesión. No toca la base |
 | Reject | `RechazarQA_Click` | Exige serial y *Released by*, pide confirmación y llama `BaseSqlite.Rechazar`. No imprime |
 
-`PrintDocument2_PrintPage` solo dibuja la etiqueta "Calidad Liberacion" (WO, Item, Modelo final, fecha y hora, Turno, Liberado por, serial en barras y en texto).
+`PrintDocument2_PrintPage` solo dibuja la etiqueta "Calidad Liberacion" (WO, Item, Modelo final, fecha y hora, Turno, Liberado por, serial en barras y en texto). El código del serial se dibuja con `CodigoBarras39.Dibujar` en `(80, 101)`.
 
 ### 6.4 `BaseSqlite`
 
@@ -341,6 +343,33 @@ El detalle es la salida estándar del script. Con código 2 se le agrega stderr.
 | Rechazar | `RECHAZAR - etiqueta no válida` | Rojo `#C62828` |
 | RevisionManual | `REVISIÓN MANUAL - revisa la etiqueta a simple vista` | Ámbar `#FFB300`, texto negro |
 | ErrorOCR | `ERROR - no se pudo verificar` | Gris `#616161` |
+
+### 6.7 Códigos de barras (`CodigoBarras39`)
+
+**Cambio.** Antes, los códigos de las etiquetas de trazabilidad y de liberación eran texto `*VALOR*` escrito con la fuente "Libre Barcode 39". Al imprimir con Microsoft Print to PDF, el PDF mostraba letras (por ejemplo `RrY]ksWWWWWXR`) en lugar de barras, aunque la fuente estaba instalada. Lo mismo pasaba en cualquier máquina sin la fuente. Ahora `CodigoBarras39.Dibujar(g, valor, x, y)` dibuja cada barra con `Graphics.FillRectangle`, así que el código no depende de ninguna fuente y llega al PDF o a la impresora como figuras.
+
+**Cómo funciona.**
+- Agrega los asteriscos de inicio y fin; quien llama pasa solo el valor.
+- Cada carácter tiene 9 elementos (5 barras y 4 espacios), 3 de ellos anchos, según la tabla estándar de Code 39 (`Patrones`).
+- `Normalizar` pasa el valor a mayúsculas y omite lo que no existe en Code 39. Solo admite dígitos, `A`–`Z` y los signos `-`, `.`, espacio, `$`, `/`, `+` y `%`.
+- El texto legible no cambia: el serial se sigue escribiendo debajo con `DrawString`.
+
+**Tamaño y posición.** Las medidas (en 1/100 de pulgada, la unidad del `Graphics` de impresión) se tomaron de lo que dibujaba Libre Barcode 39 a 24 pt. Así el código ocupa el mismo lugar que antes, y `(x, y)` sigue siendo el mismo punto que se le pasaba a `DrawString`.
+
+| Constante | Valor | Qué es |
+|---|---|---|
+| `Angosta` | 1.0 | Barra o espacio angosto (0.01 in) |
+| `Ancha` | 3.0 | Barra o espacio ancho (relación 3:1) |
+| `Separacion` | 1.46 | Espacio entre caracteres |
+| `Alto` | 19.6 | Alto de las barras |
+| `MargenX`, `MargenY` | 5.56, 0.4 | Distancia del punto `(x, y)` a la primera barra, como dejaba `DrawString` |
+
+**Verificación.**
+- Se ejecutaron los manejadores `PrintPage` reales sobre una imagen de 600 ppp y se compararon con la versión de la fuente: los extremos de cada código coinciden con menos de un píxel (0.17/100 in) de diferencia.
+- `pyzbar` decodifica el SN y el M/I de la etiqueta de trazabilidad, y el serial de la de liberación, a 600, 300, 203 y 150 ppp.
+- Lo mismo con la impresión real por Microsoft Print to PDF, convertida a imagen a 300 y 203 ppp. El PDF ya no incluye ninguna fuente de código de barras.
+
+Para cambiar el tamaño del código, ajustar las constantes. `Angosta` no debe bajar de lo que la impresora puede marcar: a 203 ppp, 0.01 in son unos 2 puntos.
 
 ---
 
@@ -583,7 +612,7 @@ El diseño está en coordenadas fijas (en centésimas de pulgada) dentro de los 
 | Liberación | `Form1.PrintDocument2_PrintPage` |
 | Embarque | `Embarques.PrintDocument1_PrintPage` (maneja `PrintDocument3`) |
 
-Las fuentes salen de los `TextBox` ocultos (`TextBox7`, `TextBox8`, `TextBox3`).
+Las fuentes de texto salen de los `TextBox` ocultos (`TextBox8`, `TextBox3`). Los códigos de barras de trazabilidad y de liberación se dibujan con `CodigoBarras39` ([6.7](#67-códigos-de-barras-codigobarras39)). El de embarque se sigue escribiendo con la fuente "Bar-Code 39".
 
 Si cambia el texto impreso, revisar las expresiones regulares de `verificar_etiqueta.py` (`WO …-`, `RV:`, `FECHA:`). Si cambia el formato del serial, actualizar también `PATRON_SERIAL`, `PATRON_PARECE_SERIAL` y `LETRAS_MES` en `motor.py` y sus pruebas.
 
@@ -624,6 +653,8 @@ Si cambia el texto impreso, revisar las expresiones regulares de `verificar_etiq
 - `Area.txt` se compara sin recortar espacios ni saltos de línea, y si falta la app falla al iniciar.
 - *Released by* es texto libre: no se toma del usuario que inició sesión. `rol` no se usa. Cualquier usuario puede crear otros. No hay bloqueo por intentos fallidos. Las contraseñas permiten de 3 a 8 caracteres.
 - *Reject* no exige haber hecho *Search*.
+- El código de barras pasa el valor a mayúsculas y omite los caracteres que no existen en Code 39, pero la base guarda el item tal como se escribió. Un item en minúsculas o con caracteres como `_` queda distinto en el código y en el registro, y la verificación lo marca como `ITEM_NO_COINCIDE`.
+- `TextBox7` y las asignaciones `TextBox7.Text = "*…*"` quedaron sin uso tras el cambio a `CodigoBarras39`.
 - La fecha de la etiqueta de liberación no rellena con ceros (por ejemplo `5/3/2026   Hora: 9:5`).
 - El botón *Embarques* de la barra (visible en modo EMBARQUES) no tiene acción. El botón *Verify label (OCR)* también aparece en modo EMBARQUES, aunque no aplica.
 - La etiqueta de embarque dibuja "Exportation" y "Sales Order" en la misma posición (se enciman). Usa la fuente "Bar-Code 39", distinta de la del resto. Su *Reprint* antes de imprimir produce una etiqueta vacía.
@@ -660,7 +691,7 @@ Si cambia el texto impreso, revisar las expresiones regulares de `verificar_etiq
 | *"Error al cargar los valores desde la base de datos"* al abrir | No se puede crear o abrir la base (permisos, ruta inválida, archivo bloqueado) | Revisar la carpeta de la base y sus permisos de escritura |
 | **ERROR** con *"No se pudo abrir la camara."* | No hay cámara, está en uso o Windows bloquea el acceso | Conectar la cámara, cerrar otros programas que la usen y permitir el acceso en *Privacidad → Cámara* (aplicaciones de escritorio) |
 | La ventana de la cámara no aparece y la app se queda esperando | La ventana de OpenCV quedó detrás de otra | Buscarla en la barra de tareas y pulsar Q para salir |
-| Los códigos de barras salen como texto normal | Falta la fuente | Instalar "Libre Barcode 39" (o "Bar-Code 39" en EMBARQUES) para todos los usuarios y reiniciar la app |
+| Los códigos de barras de la etiqueta de embarque salen como texto normal | Falta la fuente "Bar-Code 39" | Instalarla para todos los usuarios y reiniciar la app. Las etiquetas de trazabilidad y de liberación no usan fuente para el código |
 | No aparece el campo *Revision* en PIPING, o no carga Embarques | `Area.txt` con espacios o línea nueva | Dejar solo la palabra, sin salto de línea |
 | La app falla al iniciar | Falta `Etiquetas\Area.txt` | Copiar la carpeta `Etiquetas\` junto al exe |
 | Imprime en la impresora equivocada | La app usa la predeterminada de Windows | Cambiar la impresora predeterminada |

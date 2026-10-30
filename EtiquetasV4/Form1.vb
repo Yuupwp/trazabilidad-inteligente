@@ -424,7 +424,7 @@ Public Class Form1
             TextBox12.Text = etiquetaActual.ToString("000000")
             TextBox14.Text = etiquetaGeneral.ToString("000000")
 
-            e.Graphics.DrawString("*" & NS & "*", TextBox7.Font, Brushes.Black, 70, 66)
+            CodigoBarras39.Dibujar(e.Graphics, NS, 70, 66)
             e.Graphics.DrawString(NS, newFont, Brushes.Black, 70, 90)
             e.HasMorePages = i < PrintDocument1.PrinterSettings.Copies
             e.Graphics.DrawString("WO" & ": ", TextBox8.Font, Brushes.Black, 40, -4)
@@ -434,7 +434,7 @@ Public Class Form1
             e.Graphics.DrawString("Turno: " & ComboBox2.Text, TextBox8.Font, Brushes.Black, 107, 49)
             e.Graphics.DrawString("Fecha: " & fechaActual.ToString("dd/MM/yyyy"), TextBox8.Font, Brushes.Black, 170, 49)
             e.Graphics.DrawString("M/I: ", TextBox8.Font, Brushes.Black, 40, 13)
-            e.Graphics.DrawString(TextBox7.Text, TextBox7.Font, Brushes.Black, 75, 14)
+            CodigoBarras39.Dibujar(e.Graphics, TextBox11.Text, 75, 14)
             e.Graphics.DrawString("# Identificacion: ", TextBox8.Font, Brushes.Black, 40, 35)
             e.Graphics.DrawString(TextBox5.Text, TextBox8.Font, Brushes.Black, 150, 35)
 
@@ -574,7 +574,7 @@ Public Class Form1
         e.Graphics.DrawString($"Fecha: {fechaImpresion}", TextBox8.Font, Brushes.Black, 40, 59)
         e.Graphics.DrawString("Turno: " & Turno.Text, TextBox8.Font, Brushes.Black, 240, 59)
         ' Código de barras del serial que se está liberando (antes usaba el último serial generado en esta estación)
-        e.Graphics.DrawString("*" & textSerial & "*", TextBox7.Font, Brushes.Black, 80, 101)
+        CodigoBarras39.Dibujar(e.Graphics, textSerial, 80, 101)
         e.Graphics.DrawString("Liberado por: " & Liberado.Text, TextBox8.Font, Brushes.Black, 40, 79)
         e.Graphics.DrawString("Serial: ", TextBox8.Font, Brushes.Black, 40, 101)
         e.Graphics.DrawString(textSerial, TextBox3.Font, Brushes.Black, 115, 125)
