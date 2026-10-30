@@ -16,7 +16,7 @@ Supuestos: 2 personas (A: VB.NET/SQLite, B: Python), 2–4 semanas, solo webcam/
 | Usuarios con contraseña cifrada (tabla `usuarios`) | ✅ Hecho; `PassQA.txt` eliminado |
 | Correcciones finales (rama `correcciones-finales`) | ✅ Ver sección "Correcciones" |
 | Servicio FastAPI, `DibujoEtiqueta.vb`/exportar PNG, modelo opcional | ❌ No se hicieron (ver "Cambios respecto al plan") |
-| Manuales de usuario y técnico | ⏳ Pendientes, después de probar las correcciones |
+| Manuales de usuario y técnico (`docs/manual-usuario.md`, `docs/manual-tecnico.md`) | ✅ Hechos, con capturas (`docs/img/`) y versión Word (`docs/manual-usuario.docx`, `docs/manual-tecnico.docx`) |
 
 ## Arquitectura implementada
 **Base SQLite compartida + script Python que la app ejecuta como proceso.**
