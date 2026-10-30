@@ -656,7 +656,8 @@ Si cambia el texto impreso, revisar las expresiones regulares de `verificar_etiq
 - El código de barras pasa el valor a mayúsculas y omite los caracteres que no existen en Code 39, pero la base guarda el item tal como se escribió. Un item en minúsculas o con caracteres como `_` queda distinto en el código y en el registro, y la verificación lo marca como `ITEM_NO_COINCIDE`.
 - `TextBox7` y las asignaciones `TextBox7.Text = "*…*"` quedaron sin uso tras el cambio a `CodigoBarras39`.
 - La fecha de la etiqueta de liberación no rellena con ceros (por ejemplo `5/3/2026   Hora: 9:5`).
-- El botón *Embarques* de la barra (visible en modo EMBARQUES) no tiene acción. El botón *Verify label (OCR)* también aparece en modo EMBARQUES, aunque no aplica.
+- El botón *Embarques* de la barra (visible en modo EMBARQUES) no tiene acción. El botón *Verify label (OCR)* también aparece en modo EMBARQUES, aunque no aplica, y tapa parte del botón *Reprint* de esa pantalla (se agrega con `BringToFront` en la esquina inferior derecha).
+- Los avisos hechos con `MsgBox` sin título (por ejemplo "Complete todos los campos") muestran como título *Microsoft.VisualBasic.Core*.
 - La etiqueta de embarque dibuja "Exportation" y "Sales Order" en la misma posición (se enciman). Usa la fuente "Bar-Code 39", distinta de la del resto. Su *Reprint* antes de imprimir produce una etiqueta vacía.
 - La reimpresión de Release se pierde al cerrar la app.
 

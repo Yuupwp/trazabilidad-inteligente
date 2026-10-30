@@ -42,7 +42,7 @@ Quién usa cada parte:
 
 ### 2.1 Partes de la etiqueta de trazabilidad
 
-![Figura 1. Etiqueta de trazabilidad impresa](img/04-etiqueta-trazabilidad.jpg)
+![Figura 1. Etiqueta de trazabilidad impresa](img/04-etiqueta-trazabilidad.png)
 
 | En la etiqueta | Qué es | De dónde sale |
 |---|---|---|
@@ -223,7 +223,7 @@ Pulsa **Print**. El orden es:
 
 La etiqueta de liberación lleva el encabezado **"Calidad Liberacion"** (así, sin acento) y además: WO, Item, Modelo final, Fecha y hora, Turno, Liberado por, y el serial en código de barras y en texto. Todas las copias son idénticas.
 
-![Figura 8. Etiqueta de liberación "Calidad Liberacion"](img/08-etiqueta-liberacion.jpg)
+![Figura 8. Etiqueta de liberación "Calidad Liberacion"](img/08-etiqueta-liberacion.png)
 
 ### 5.5 Reject: rechazar la etiqueta
 
@@ -310,6 +310,8 @@ Aparece la ventana **"Verificar etiqueta (OCR)"** con un encabezado de color y, 
 
 ![Figura 14. Resultado REVISIÓN MANUAL](img/14-ocr-revision.png)
 
+![Figura 15. Resultado ERROR (se salió de la cámara con Q sin capturar)](img/20-ocr-error.png)
+
 El detalle muestra lo que se leyó (serial e item de los códigos de barras, primera línea de texto, nitidez de la imagen) y la lista de motivos, cada uno con un código entre corchetes, por ejemplo `[WO_DUDOSO]`. Los motivos marcados como `(aviso)` son solo informativos y no cambian el resultado.
 
 ### 6.6 Motivos y qué hacer
@@ -343,7 +345,9 @@ Los usuarios de QA son los que pueden entrar a **Release** y registrar a otros u
 
 ### 7.1 Primer usuario
 
-Si todavía no hay ningún usuario, al pulsar **Register** aparece *"No hay usuarios registrados. Crea el primer usuario de QA."* y se abre directamente la ventana de registro, sin pedir inicio de sesión.
+Si todavía no hay ningún usuario, al pulsar **Register** aparece *"No hay usuarios registrados. Crea el primer usuario de QA."* Al pulsar **Aceptar** se abre directamente la ventana de registro, sin pedir inicio de sesión.
+
+![Figura 16. Aviso al crear el primer usuario](img/19-primer-usuario.png)
 
 ### 7.2 Usuarios siguientes
 
@@ -351,7 +355,7 @@ Si todavía no hay ningún usuario, al pulsar **Register** aparece *"No hay usua
 2. Inicia sesión con un **usuario de QA que ya exista** (igual que en la [sección 5.1](#51-iniciar-sesión)).
 3. Se abre la ventana **"Registrar de personal"**.
 
-![Figura 15. Ventana de registro de usuario](img/09-registro-usuario.png)
+![Figura 17. Ventana de registro de usuario](img/09-registro-usuario.png)
 
 ### 7.3 Registrar
 
@@ -372,7 +376,7 @@ La app no tiene opciones para borrar usuarios ni cambiar contraseñas. Si lo nec
 
 En las estaciones configuradas como **EMBARQUES**, la app muestra la pantalla de etiquetas de embarque en lugar de la de trazabilidad. Los botones *Traceability*, *Release* y *Register* no aparecen.
 
-![Figura 16. Pantalla de Embarques](img/15-embarques.png)
+![Figura 18. Pantalla de Embarques](img/15-embarques.png)
 
 La etiqueta de embarque **no genera número de serie ni se guarda en la base de datos**.
 
@@ -391,7 +395,7 @@ Todas las copias son idénticas. Al terminar, los campos se borran. Si falta alg
 
 La etiqueta lleva los cinco datos en texto grande. Sales Order, Delivery Number, Tracking y Carrier llevan además su código de barras.
 
-![Figura 17. Etiqueta de embarque](img/16-etiqueta-embarques.jpg)
+![Figura 19. Etiqueta de embarque](img/16-etiqueta-embarques.png)
 
 ### 8.2 Reimprimir
 
@@ -400,11 +404,15 @@ La etiqueta lleva los cinco datos en texto grande. Sales Order, Delivery Number,
 
 Se reimprime la última etiqueta de embarque de **esta sesión**. Si todavía no has impreso ninguna desde que abriste la app, la etiqueta sale vacía.
 
+En esta pantalla, el botón *Verify label (OCR)* tapa parte de **Reprint** (ver la figura de la pantalla de Embarques). Pulsa la parte visible de *Reprint*, a la izquierda. La verificación no se usa en Embarques.
+
 ---
 
 ## 9. Mensajes de error frecuentes y qué hacer
 
-![Figura 18. Mensaje de campos incompletos](img/17-error-campos.png)
+Algunos avisos aparecen con el título *"Microsoft.VisualBasic.Core"* (por ejemplo, el de campos incompletos). Es el título por defecto de Windows y no indica ningún error adicional.
+
+![Figura 20. Mensaje de campos incompletos](img/17-error-campos.png)
 
 | Mensaje | Dónde | Qué hacer |
 |---|---|---|

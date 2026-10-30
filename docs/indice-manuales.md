@@ -38,18 +38,18 @@ Instalación y mantenimiento.
 
 ## Imágenes
 
-En `docs/img/`. Los manuales llevan el marcador aunque la imagen todavía no exista.
+En `docs/img/`, todas en PNG (las etiquetas 04, 08 y 16 se guardaron como PNG en lugar de JPG para que se vean mejor).
 
 | Archivo | Manual y sección | Contenido |
 |---|---|---|
 | `01-principal-trazabilidad.png` | Usuario §3 | Pantalla principal vacía |
 | `02-trazabilidad-llena.png` | Usuario §4 | Campos llenos antes de Print |
 | `03-piping-revision.png` | Usuario §2/§4 | Modo PIPING con campo Revision |
-| `04-etiqueta-trazabilidad.jpg` | Usuario §2 | Etiqueta de trazabilidad |
+| `04-etiqueta-trazabilidad.png` | Usuario §2 | Etiqueta de trazabilidad |
 | `05-login-qa.png` | Usuario §5 | Inicio de sesión |
 | `06-liberacion-busqueda.png` | Usuario §5 | Release después de Search |
 | `07-liberacion-exito.png` | Usuario §5 | Mensaje de liberado con éxito |
-| `08-etiqueta-liberacion.jpg` | Usuario §5 | Etiqueta "Calidad Liberación" |
+| `08-etiqueta-liberacion.png` | Usuario §5 | Etiqueta "Calidad Liberación" |
 | `09-registro-usuario.png` | Usuario §7 | Ventana Register |
 | `10-ocr-pregunta.png` | Usuario §6 | Diálogo para elegir cámara o archivo |
 | `11-ocr-camara.png` | Usuario §6 | Ventana de la cámara |
@@ -57,6 +57,8 @@ En `docs/img/`. Los manuales llevan el marcador aunque la imagen todavía no exi
 | `13-ocr-rechazar.png` | Usuario §6 | Ventana de resultado RECHAZAR |
 | `14-ocr-revision.png` | Usuario §6 | Ventana de resultado REVISIÓN MANUAL |
 | `15-embarques.png` | Usuario §8 | Pantalla de Embarques |
-| `16-etiqueta-embarques.jpg` | Usuario §8 | Etiqueta de Embarques (opcional) |
+| `16-etiqueta-embarques.png` | Usuario §8 | Etiqueta de Embarques (opcional) |
 | `17-error-campos.png` | Usuario §9 | Error de campos (opcional) |
 | `18-rechazo-reject.png` | Usuario §5 | Resultado del botón Reject (nueva, si aplica) |
+| `19-primer-usuario.png` | Usuario §7 | Aviso "No hay usuarios registrados" al crear el primer usuario (agregada) |
+| `20-ocr-error.png` | Usuario §6 | Ventana de resultado ERROR (agregada) |
